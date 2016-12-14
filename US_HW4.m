@@ -64,7 +64,7 @@ seg(5) = size(cyst.data,1);
 
 %segment delay profiles
 for i = 1:5
-    dis = sqrt((abs((1:128)-center) * 0.1953/1000).^2 + (seg(i)/s_rate * c ).^2);
+    dis = sqrt((abs((1:128)-center) * 0.1953/1000).^2 + (seg(i)/s_rate/2 * c ).^2);
     t01 = 1/c .* dis;
     t01 = (t01 - min(t01));
     t(i,1:128) = t01;
@@ -80,7 +80,7 @@ sampleD = sampleD';
 %create delayed signal
 seg(2:6) = seg(1:5);
 seg(1) = 1;
-RFdata = zeros(size(cyst.data,1),size(cyst.data,2));
+data = zeros(size(cyst.data,1),size(cyst.data,2));
 for i = 2:6
     for j = 1:size(cyst.data,3)
         for n = 1:size(cyst.data,2)
@@ -88,11 +88,17 @@ for i = 2:6
                 delayedSignal( (k-seg(i-1)+1)-sampleD(i-1,n)+max(sampleD(i-1,:)),n) = cyst.data(k,n,j);
             end
         end
-        delayedSignal = delayedSignal(max(sampleD(i-1,:))+1:end,:) 
-        RFdata(seg(i-1):seg(i),j) = sum(delayedSignal,2);
+        delayedSignal = delayedSignal(max(sampleD(i-1,:))+1:end,:); 
+        data(seg(i-1):seg(i),:,j) = delayedSignal;
         clear delayedSignal
     end
 end
+szDat = size(data);
+apodMaskRec = repmat(rec(length(rec)/2-64:length(rec)/2+64),[szDat(1),1,szDat(3)]);
+apodMaskW = repmat(welchS,[szDat(1),1,szDat(3)]);
+apodMaskBH = repmat(BHwinS,[szDat(1),1,szDat(3)]);
+
+
 
 xmax = 0.1953/1000 * 128;
 ymax = seg(i)/s_rate * c / 2;
